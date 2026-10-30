@@ -1,8 +1,10 @@
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const pad = n => String(n).padStart(2,'0');
+const LOTERIAS_URL = 'https://www.loteriasonline.caixa.gov.br/';
 let results = [];
 let worker;
+let currentGames = [];
 
 function loading(){
   $('#gamesGrid').innerHTML = '<div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div>';
@@ -60,10 +62,67 @@ function runEngine(){
   worker.onmessage=e=>{ if(e.data.type==='progress') $('#engineState').textContent=`Calculando ${e.data.pct}%`; if(e.data.type==='done'){renderGames(e.data.games);$('#engineState').textContent='3.268.760 combinações avaliadas';} };
   worker.postMessage({results});
 }
+
 function renderGames(games){
-  $('#gamesGrid').innerHTML=games.map((g,i)=>`<article class="card game-card ${i===0?'best':''}"><div class="game-rank"><strong>${i===0?'★ JOGO PRINCIPAL':`JOGO ${i+1}`}</strong><span class="score">Score ${g.score.toFixed(1)}/100</span></div><div class="balls">${g.numbers.map(n=>`<span class="ball">${pad(n)}</span>`).join('')}</div><div class="game-meta"><div class="meta"><span>Pares</span><b>${g.even}</b></div><div class="meta"><span>Soma</span><b>${g.sum}</b></div><div class="meta"><span>Repete últ.</span><b>${g.repeat}</b></div></div><button class="copy-btn" data-copy="${g.numbers.map(pad).join(' ')}">Copiar dezenas</button></article>`).join('');
-  $$('.copy-btn').forEach(b=>b.onclick=async()=>{await navigator.clipboard.writeText(b.dataset.copy);const old=b.textContent;b.textContent='✓ Copiado';setTimeout(()=>b.textContent=old,1200)});
+  currentGames = games;
+  $('#gamesGrid').innerHTML=games.map((g,i)=>`<article class="card game-card ${i===0?'best':''}"><div class="game-rank"><strong>${i===0?'★ JOGO PRINCIPAL':`JOGO ${i+1}`}</strong><span class="score">Score ${g.score.toFixed(1)}/100</span></div><div class="balls">${g.numbers.map(n=>`<span class="ball">${pad(n)}</span>`).join('')}</div><div class="game-meta"><div class="meta"><span>Pares</span><b>${g.even}</b></div><div class="meta"><span>Soma</span><b>${g.sum}</b></div><div class="meta"><span>Repete últ.</span><b>${g.repeat}</b></div></div><button class="bet-btn" data-bet="${i}"><span>↗</span> Abrir Loterias CAIXA</button></article>`).join('');
+  $$('.bet-btn').forEach(b=>b.onclick=()=>startBetMode(Number(b.dataset.bet)));
 }
+
+function ensureBetDock(){
+  let dock = $('#betDock');
+  if(dock) return dock;
+  dock = document.createElement('div');
+  dock.id = 'betDock';
+  dock.className = 'bet-dock';
+  document.body.appendChild(dock);
+  return dock;
+}
+
+function startBetMode(index){
+  const game = currentGames[index];
+  if(!game) return;
+  const dock = ensureBetDock();
+  const title = index===0 ? 'Jogo principal' : `Jogo ${index+1}`;
+  dock.innerHTML = `
+    <div class="bet-dock-head">
+      <div>
+        <span>MODO APOSTA</span>
+        <strong>${title}</strong>
+      </div>
+      <button class="bet-close" aria-label="Fechar">×</button>
+    </div>
+    <div class="bet-help">Marque estas 15 dezenas no volante da Lotofácil no site oficial da CAIXA.</div>
+    <div class="bet-numbers">${game.numbers.map(n=>`<b>${pad(n)}</b>`).join('')}</div>
+    <div class="bet-actions">
+      <button class="bet-reopen">↗ Abrir / voltar à CAIXA</button>
+      <button class="bet-done">Fechar modo aposta</button>
+    </div>
+    <div class="bet-tip">A CAIXA abre em outra aba. Volte a esta aba quando quiser conferir os números.</div>`;
+  dock.classList.add('show');
+  document.body.classList.add('bet-mode-open');
+  dock.querySelector('.bet-close').onclick = closeBetMode;
+  dock.querySelector('.bet-done').onclick = closeBetMode;
+  dock.querySelector('.bet-reopen').onclick = openCaixa;
+  openCaixa();
+}
+
+function openCaixa(){
+  const link = document.createElement('a');
+  link.href = LOTERIAS_URL;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function closeBetMode(){
+  const dock = $('#betDock');
+  if(dock) dock.classList.remove('show');
+  document.body.classList.remove('bet-mode-open');
+}
+
 $('#refreshBtn').addEventListener('click',load);
 load();
 setInterval(load,10*60*1000);
