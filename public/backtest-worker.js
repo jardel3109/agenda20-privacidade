@@ -1,5 +1,6 @@
 const C = (n,k)=>{if(k<0||k>n)return 0;k=Math.min(k,n-k);let r=1;for(let i=1;i<=k;i++)r=r*(n-k+i)/i;return r;};
 const intersectCount=(a,b)=>{let c=0;const s=new Set(b);for(const n of a)if(s.has(n))c++;return c;};
+const sig=nums=>nums.map(n=>String(n).padStart(2,'0')).join('-');
 
 function buildModel(results){
   const freq=Array(26).fill(0), rec=Array(26).fill(0), pair=Array.from({length:26},()=>Array(26).fill(0));
@@ -37,10 +38,10 @@ function score(nums,m){
 
 function uniqueSorted(arr){return [...new Set(arr)].sort((a,b)=>a-b);}
 
-function hillClimb(seed,m,rounds=4){
+function hillClimb(seed,m,excluded,rounds=4){
   let current=uniqueSorted(seed);
   if(current.length!==15)return null;
-  let currentScore=score(current,m);
+  let currentScore=excluded.has(sig(current))?-Infinity:score(current,m);
   for(let round=0;round<rounds;round++){
     const inside=new Set(current);
     const outside=[];for(let n=1;n<=25;n++)if(!inside.has(n))outside.push(n);
@@ -48,6 +49,7 @@ function hillClimb(seed,m,rounds=4){
     for(let i=0;i<15;i++){
       for(const add of outside){
         const next=current.slice();next[i]=add;next.sort((a,b)=>a-b);
+        if(excluded.has(sig(next)))continue;
         const s=score(next,m);
         if(s>bestScore+1e-12){best=next;bestScore=s;}
       }
@@ -55,10 +57,11 @@ function hillClimb(seed,m,rounds=4){
     if(best===current)break;
     current=best;currentScore=bestScore;
   }
+  if(!Number.isFinite(currentScore)||excluded.has(sig(current)))return null;
   return {numbers:current,raw:currentScore};
 }
 
-function generateGames(window){
+function generateGames(window,excluded){
   const m=buildModel(window);
   const nums=Array.from({length:25},(_,i)=>i+1);
   const composite=nums.slice().sort((a,b)=>{
@@ -71,9 +74,9 @@ function generateGames(window){
   const mix=uniqueSorted([...composite.slice(0,10),...byRec.filter(n=>!composite.slice(0,10).includes(n)).slice(0,5)]);
   const seeds=[composite.slice(0,15),byFreq.slice(0,15),byRec.slice(0,15),last,mix];
   const candidates=[];
-  for(const seed of seeds){const c=hillClimb(seed,m,4);if(c)candidates.push(c);}
+  for(const seed of seeds){const c=hillClimb(seed,m,excluded,4);if(c)candidates.push(c);}
   const dedup=new Map();
-  for(const c of candidates)dedup.set(c.numbers.join('-'),c);
+  for(const c of candidates)if(!excluded.has(sig(c.numbers)))dedup.set(sig(c.numbers),c);
   let list=[...dedup.values()].sort((a,b)=>b.raw-a.raw);
   if(!list.length)return [];
 
@@ -82,16 +85,16 @@ function generateGames(window){
   for(let swaps=1;swaps<=3;swaps++){
     const v=best.numbers.slice();
     for(let s=0;s<swaps;s++)v[14-s]=rankOut[s]||v[14-s];
-    const c=hillClimb(uniqueSorted(v),m,2);if(c)list.push(c);
+    const c=hillClimb(uniqueSorted(v),m,excluded,2);if(c&&!excluded.has(sig(c.numbers)))list.push(c);
   }
-  const again=new Map();for(const c of list)again.set(c.numbers.join('-'),c);
+  const again=new Map();for(const c of list)if(!excluded.has(sig(c.numbers)))again.set(sig(c.numbers),c);
   list=[...again.values()].sort((a,b)=>b.raw-a.raw);
 
   const chosen=[];
   for(const c of list){
     if(chosen.every(x=>intersectCount(x.numbers,c.numbers)<=12)){chosen.push(c);if(chosen.length===3)break;}
   }
-  for(const c of list){if(chosen.length===3)break;if(!chosen.some(x=>x.numbers.join('-')===c.numbers.join('-')))chosen.push(c);}
+  for(const c of list){if(chosen.length===3)break;if(!chosen.some(x=>sig(x.numbers)===sig(c.numbers)))chosen.push(c);}
   return chosen.slice(0,3);
 }
 
@@ -111,12 +114,13 @@ self.onmessage=({data})=>{
   for(let t=0;t<count;t++){
     const target=history[t];
     const window=history.slice(t+1,t+11);
-    const games=generateGames(window);
-    if(games.length<3){postMessage({type:'error',message:`Falha ao gerar jogos históricos no concurso ${target.numero}.`});return;}
+    const excluded=new Set(history.slice(t+1).map(d=>sig(d.dezenas)));
+    const games=generateGames(window,excluded);
+    if(games.length<3){postMessage({type:'error',message:`Falha ao gerar 3 jogos históricos no concurso ${target.numero}.`});return;}
     const hits=games.map(g=>intersectCount(g.numbers,target.dezenas));
     for(const h of hits)gameDist[h]++;
     const best=Math.max(...hits);bestDist[best]++;
-    rows.push({contest:target.numero,date:target.data,hits,best});
+    rows.push({contest:target.numero,date:target.data,hits,best,excludedBefore:excluded.size});
     if(t%5===0||t===count-1)postMessage({type:'progress',pct:Math.round((t+1)/count*100),done:t+1,total:count});
   }
 
@@ -130,6 +134,7 @@ self.onmessage=({data})=>{
     gameDist,
     bestDist,
     expected,
+    noRepeatRule:true,
     summary:{
       hits11:sumFrom(gameDist,11),expected11:expFrom(11),
       hits12:sumFrom(gameDist,12),expected12:expFrom(12),
