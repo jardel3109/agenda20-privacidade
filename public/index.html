@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#071a16" />
+<title>Lotofácil PRO — Análise técnica</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="mark">LF</div>
+      <div><div class="brand">Lotofácil <b>PRO</b></div><div class="tagline">Análise técnica • dados oficiais</div></div>
+    </div>
+    <button id="refreshBtn" class="btn secondary"><span class="refresh-icon">↻</span> Atualizar</button>
+  </header>
+
+  <main>
+    <section class="hero card">
+      <div>
+        <div class="eyebrow"><span class="dot" id="statusDot"></span><span id="sourceStatus">Conectando à CAIXA...</span></div>
+        <h1>Três jogos. Um modelo.<br><span>Zero aleatoriedade.</span></h1>
+        <p>Os 10 concursos oficiais mais recentes alimentam um motor determinístico que avalia estrutura, frequência, recência e diversificação.</p>
+      </div>
+      <div class="hero-side">
+        <div class="next-label">ÚLTIMO OFICIAL</div>
+        <div class="contest-number" id="latestNumber">—</div>
+        <div class="contest-date" id="latestDate">Aguardando dados</div>
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <div class="stat card"><span>Janela analisada</span><strong id="windowStat">—</strong><small>concursos oficiais</small></div>
+      <div class="stat card"><span>Combinações</span><strong>3.268.760</strong><small>C(25,15)</small></div>
+      <div class="stat card"><span>Fonte</span><strong class="official">CAIXA</strong><small id="fetchedAt">aguardando</small></div>
+      <div class="stat card"><span>Modelo</span><strong>Determinístico</strong><small>sem números aleatórios</small></div>
+    </section>
+
+    <nav class="tabs card" aria-label="Seções">
+      <button class="tab active" data-tab="games">Jogos sugeridos</button>
+      <button class="tab" data-tab="analysis">Análise</button>
+      <button class="tab" data-tab="draws">10 concursos</button>
+      <button class="tab" data-tab="method">Método</button>
+    </nav>
+
+    <section id="games" class="tab-panel active">
+      <div class="section-head"><div><div class="eyebrow">SELEÇÃO DO MODELO</div><h2>3 jogos recomendados</h2></div><div id="engineState" class="engine-state">Aguardando dados</div></div>
+      <div id="gamesGrid" class="games-grid skeleton-grid"></div>
+      <div class="notice"><b>Importante:</b> o score mede aderência ao modelo, não probabilidade de prêmio. Em sorteios independentes, análise histórica não torna uma combinação individual mais provável.</div>
+    </section>
+
+    <section id="analysis" class="tab-panel">
+      <div class="section-head"><div><div class="eyebrow">RAIO-X DOS 10 ÚLTIMOS</div><h2>Mapa das 25 dezenas</h2></div></div>
+      <div class="analysis-layout">
+        <div class="card panel"><div class="panel-title">Frequência e recência</div><div id="heatmap" class="heatmap"></div></div>
+        <div class="card panel"><div class="panel-title">Leitura da janela</div><div id="insights" class="insights"></div></div>
+      </div>
+    </section>
+
+    <section id="draws" class="tab-panel">
+      <div class="section-head"><div><div class="eyebrow">AUDITORIA</div><h2>Concursos usados no cálculo</h2></div><span class="verified">● somente publicados</span></div>
+      <div id="drawList" class="draw-list"></div>
+    </section>
+
+    <section id="method" class="tab-panel">
+      <div class="method-grid">
+        <div class="card method-card"><div class="method-num">01</div><h3>Fonte oficial primeiro</h3><p>O sistema descobre o último concurso efetivamente publicado pela CAIXA. Não presume o número do concurso do dia.</p></div>
+        <div class="card method-card"><div class="method-num">02</div><h3>Janela móvel de 10</h3><p>O concurso oficial mais recente entra no topo; os nove imediatamente anteriores completam a janela.</p></div>
+        <div class="card method-card"><div class="method-num">03</div><h3>Força bruta</h3><p>Todas as 3.268.760 combinações simples de 15 dezenas são pontuadas com a mesma fórmula.</p></div>
+        <div class="card method-card"><div class="method-num">04</div><h3>Diversificação</h3><p>Os três escolhidos precisam ter pontuação alta e sobreposição controlada, evitando três apostas quase idênticas.</p></div>
+      </div>
+      <div class="card formula"><h3>Componentes do score</h3><div class="formula-row"><span>Frequência</span><b>26%</b></div><div class="bar"><i style="width:26%"></i></div><div class="formula-row"><span>Recência ponderada</span><b>24%</b></div><div class="bar"><i style="width:24%"></i></div><div class="formula-row"><span>Coocorrência de pares</span><b>18%</b></div><div class="bar"><i style="width:18%"></i></div><div class="formula-row"><span>Estrutura do volante</span><b>20%</b></div><div class="bar"><i style="width:20%"></i></div><div class="formula-row"><span>Diversificação</span><b>12%</b></div><div class="bar"><i style="width:12%"></i></div></div>
+    </section>
+  </main>
+  <footer>Lotofácil PRO <span>•</span> ferramenta de análise, não registra apostas <span>•</span> 18+</footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
