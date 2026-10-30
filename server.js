@@ -222,7 +222,7 @@ function staticFile(reqPath, res) {
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.1.0' });
+  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.1.1' });
   if (u.pathname === '/api/results') {
     try {
       const count = Math.min(Math.max(parseInt(u.searchParams.get('count') || '10', 10), 10), 80);
@@ -244,4 +244,16 @@ const server = http.createServer(async (req, res) => {
   }
   staticFile(u.pathname, res);
 });
-server.listen(PORT, () => console.log(`Lotofácil PRO v1.1 em http://localhost:${PORT}`));
+
+server.listen(PORT, () => {
+  console.log(`Lotofácil PRO v1.1.1 em http://localhost:${PORT}`);
+  setTimeout(async () => {
+    try {
+      const payload = await getResults(10);
+      const nums = payload.results.map(r => r.numero);
+      console.log(`[selftest] OK fonte=${payload.mode} último=${nums[0]} janela=${nums.join(',')}`);
+    } catch (err) {
+      console.error(`[selftest] FALHA ${err.message}`);
+    }
+  }, 700);
+});
