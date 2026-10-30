@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache" />
 <meta http-equiv="Expires" content="0" />
 <title>Lotofácil PRO — Análise técnica</title>
-<link rel="stylesheet" href="/styles.css?v=130" />
+<link rel="stylesheet" href="/styles.css?v=140" />
 </head>
 <body>
 <div class="app-shell">
@@ -43,6 +43,7 @@
 
     <nav class="tabs card" aria-label="Seções">
       <button class="tab active" data-tab="games">Jogos sugeridos</button>
+      <button class="tab" data-tab="performance">Desempenho</button>
       <button class="tab" data-tab="analysis">Análise</button>
       <button class="tab" data-tab="draws">10 concursos</button>
       <button class="tab" data-tab="method">Método</button>
@@ -52,6 +53,31 @@
       <div class="section-head"><div><div class="eyebrow">SELEÇÃO DO MODELO</div><h2>3 jogos recomendados</h2></div><div id="engineState" class="engine-state">Aguardando dados</div></div>
       <div id="gamesGrid" class="games-grid skeleton-grid"></div>
       <div class="notice"><b>Importante:</b> o score mede aderência ao modelo, não probabilidade de prêmio. Em sorteios independentes, análise histórica não torna uma combinação individual mais provável.</div>
+    </section>
+
+    <section id="performance" class="tab-panel">
+      <div class="section-head"><div><div class="eyebrow">VALIDAÇÃO FORA DA AMOSTRA</div><h2>Backtest de 300 concursos</h2></div><div id="backtestState" class="engine-state">Toque na aba para iniciar</div></div>
+      <div id="backtestSummary" class="backtest-summary">
+        <div class="card bt-stat"><span>Concursos testados</span><strong>—</strong><small>sem olhar o resultado futuro</small></div>
+        <div class="card bt-stat"><span>Jogos simulados</span><strong>—</strong><small>3 por concurso</small></div>
+        <div class="card bt-stat"><span>11+ acertos</span><strong>—</strong><small>real × esperado</small></div>
+        <div class="card bt-stat"><span>13+ acertos</span><strong>—</strong><small>real × esperado</small></div>
+      </div>
+      <div class="backtest-layout">
+        <div class="card panel">
+          <div class="panel-title">Distribuição dos 900 jogos</div>
+          <div id="backtestBars" class="bt-bars"><div class="bt-placeholder">O backtest será calculado em segundo plano.</div></div>
+        </div>
+        <div class="card panel">
+          <div class="panel-title">Leitura objetiva</div>
+          <div id="backtestInsights" class="insights"><div class="insight"><span>STATUS</span><b>Aguardando execução</b></div></div>
+        </div>
+      </div>
+      <div class="card panel bt-history-panel">
+        <div class="panel-title">Concursos mais recentes do backtest</div>
+        <div id="backtestHistory" class="bt-history"><div class="bt-placeholder">Nenhum resultado calculado ainda.</div></div>
+      </div>
+      <div class="notice"><b>Como interpretar:</b> o backtest usa apenas os 10 concursos anteriores a cada alvo. Para viabilizar 300 janelas no celular, ele usa uma busca determinística acelerada do mesmo score; o motor principal dos jogos atuais continua avaliando as 3.268.760 combinações.</div>
     </section>
 
     <section id="analysis" class="tab-panel">
@@ -71,14 +97,14 @@
       <div class="method-grid">
         <div class="card method-card"><div class="method-num">01</div><h3>Fonte oficial primeiro</h3><p>O sistema descobre o último concurso efetivamente publicado pela CAIXA. Não presume o número do concurso do dia.</p></div>
         <div class="card method-card"><div class="method-num">02</div><h3>Janela móvel de 10</h3><p>O concurso oficial mais recente entra no topo; os nove imediatamente anteriores completam a janela.</p></div>
-        <div class="card method-card"><div class="method-num">03</div><h3>Força bruta</h3><p>Todas as 3.268.760 combinações simples de 15 dezenas são pontuadas com a mesma fórmula.</p></div>
+        <div class="card method-card"><div class="method-num">03</div><h3>Força bruta</h3><p>Todas as 3.268.760 combinações simples de 15 dezenas são pontuadas com a mesma fórmula no cálculo dos jogos atuais.</p></div>
         <div class="card method-card"><div class="method-num">04</div><h3>Diversificação</h3><p>Os três escolhidos precisam ter pontuação alta e sobreposição controlada, evitando três apostas quase idênticas.</p></div>
       </div>
-      <div class="card formula"><h3>Componentes do score</h3><div class="formula-row"><span>Frequência</span><b>26%</b></div><div class="bar"><i style="width:26%"></i></div><div class="formula-row"><span>Recência ponderada</span><b>24%</b></div><div class="bar"><i style="width:24%"></i></div><div class="formula-row"><span>Coocorrência de pares</span><b>18%</b></div><div class="bar"><i style="width:18%"></i></div><div class="formula-row"><span>Estrutura do volante</span><b>20%</b></div><div class="bar"><i style="width:20%"></i></div><div class="formula-row"><span>Diversificação</span><b>12%</b></div><div class="bar"><i style="width:12%"></i></div></div>
+      <div class="card formula"><h3>Componentes do score</h3><div class="formula-row"><span>Frequência</span><b>26%</b></div><div class="bar"><i style="width:26%"></i></div><div class="formula-row"><span>Recência ponderada</span><b>24%</b></div><div class="bar"><i style="width:24%"></i></div><div class="formula-row"><span>Coocorrência de pares</span><b>18%</b></div><div class="bar"><i style="width:18%"></i></div><div class="formula-row"><span>Estrutura do volante</span><b>32%</b></div><div class="bar"><i style="width:32%"></i></div></div>
     </section>
   </main>
   <footer>Lotofácil PRO <span>•</span> ferramenta de análise, não registra apostas <span>•</span> 18+</footer>
 </div>
-<script src="/app.js?v=130"></script>
+<script src="/app.js?v=140"></script>
 </body>
 </html>
