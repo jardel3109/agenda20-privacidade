@@ -5,6 +5,8 @@ const LOTERIAS_URL = 'https://www.loteriasonline.caixa.gov.br/';
 let results = [];
 let worker;
 let currentGames = [];
+let backtestWorker;
+let backtestStarted = false;
 
 function loading(){
   $('#gamesGrid').innerHTML = '<div class="loading-card"></div><div class="loading-card"></div><div class="loading-card"></div>';
@@ -15,6 +17,7 @@ function currency(v){return new Intl.NumberFormat('pt-BR',{style:'currency',curr
 $$('.tab').forEach(btn=>btn.addEventListener('click',()=>{
   $$('.tab').forEach(x=>x.classList.remove('active')); $$('.tab-panel').forEach(x=>x.classList.remove('active'));
   btn.classList.add('active'); $('#'+btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab==='performance'&&!backtestStarted) loadBacktest();
 }));
 
 async function load(){
@@ -58,7 +61,7 @@ function renderAnalysis(){
 }
 function runEngine(){
   $('#engineState').textContent='Avaliando 3.268.760 combinações...';
-  if(worker) worker.terminate(); worker=new Worker('/worker.js');
+  if(worker) worker.terminate(); worker=new Worker('/worker.js?v=140');
   worker.onmessage=e=>{ if(e.data.type==='progress') $('#engineState').textContent=`Calculando ${e.data.pct}%`; if(e.data.type==='done'){renderGames(e.data.games);$('#engineState').textContent='3.268.760 combinações avaliadas';} };
   worker.postMessage({results});
 }
@@ -67,6 +70,59 @@ function renderGames(games){
   currentGames = games;
   $('#gamesGrid').innerHTML=games.map((g,i)=>`<article class="card game-card ${i===0?'best':''}"><div class="game-rank"><strong>${i===0?'★ JOGO PRINCIPAL':`JOGO ${i+1}`}</strong><span class="score">Score ${g.score.toFixed(1)}/100</span></div><div class="balls">${g.numbers.map(n=>`<span class="ball">${pad(n)}</span>`).join('')}</div><div class="game-meta"><div class="meta"><span>Pares</span><b>${g.even}</b></div><div class="meta"><span>Soma</span><b>${g.sum}</b></div><div class="meta"><span>Repete últ.</span><b>${g.repeat}</b></div></div><button class="bet-btn" data-bet="${i}"><span>↗</span> Abrir Loterias CAIXA</button></article>`).join('');
   $$('.bet-btn').forEach(b=>b.onclick=()=>startBetMode(Number(b.dataset.bet)));
+}
+
+async function loadBacktest(){
+  backtestStarted=true;
+  $('#backtestState').textContent='Carregando 310 concursos...';
+  try{
+    const r=await fetch('/api/history?count=310',{cache:'no-store'});const data=await r.json();
+    if(!r.ok)throw new Error(data.detail||data.error||'Falha ao carregar histórico');
+    if(!Array.isArray(data.results)||data.results.length<310)throw new Error('Histórico insuficiente para 300 janelas.');
+    $('#backtestState').textContent='Preparando 300 janelas...';
+    if(backtestWorker)backtestWorker.terminate();
+    backtestWorker=new Worker('/backtest-worker.js?v=140');
+    backtestWorker.onmessage=e=>{
+      const d=e.data;
+      if(d.type==='progress')$('#backtestState').textContent=`Backtest ${d.pct}% • ${d.done}/${d.total}`;
+      if(d.type==='error'){backtestStarted=false;$('#backtestState').textContent='Falha no backtest';renderBacktestError(d.message);}
+      if(d.type==='done'){renderBacktest(d);$('#backtestState').textContent='300 concursos validados';}
+    };
+    backtestWorker.onerror=e=>{backtestStarted=false;$('#backtestState').textContent='Falha no backtest';renderBacktestError(e.message||'Erro no worker');};
+    backtestWorker.postMessage({history:data.results,count:300});
+  }catch(e){backtestStarted=false;$('#backtestState').textContent='Falha no backtest';renderBacktestError(e.message);}
+}
+
+function renderBacktestError(message){
+  $('#backtestInsights').innerHTML=`<div class="insight"><span>ERRO</span><b>${message}</b></div>`;
+  $('#backtestHistory').innerHTML='<div class="bt-placeholder">Não foi possível concluir a validação histórica.</div>';
+}
+
+function renderBacktest(d){
+  const s=d.summary;
+  $('#backtestSummary').innerHTML=`
+    <div class="card bt-stat"><span>Concursos testados</span><strong>${d.count}</strong><small>janela móvel de 10</small></div>
+    <div class="card bt-stat"><span>Jogos simulados</span><strong>${d.totalGames}</strong><small>3 por concurso</small></div>
+    <div class="card bt-stat"><span>11+ acertos</span><strong>${s.hits11}</strong><small>esperado ≈ ${s.expected11.toFixed(1)}</small></div>
+    <div class="card bt-stat"><span>13+ acertos</span><strong>${s.hits13}</strong><small>esperado ≈ ${s.expected13.toFixed(1)}</small></div>`;
+
+  const hits=[11,12,13,14,15];
+  const max=Math.max(1,...hits.flatMap(k=>[d.gameDist[k]||0,d.expected[k]||0]));
+  $('#backtestBars').innerHTML=hits.map(k=>{
+    const actual=d.gameDist[k]||0,exp=d.expected[k]||0;
+    return `<div class="bt-row"><div class="bt-row-head"><b>${k} acertos</b><span>${actual} reais • ${exp.toFixed(1)} esperados</span></div><div class="bt-track"><i class="actual" style="width:${actual/max*100}%"></i></div><div class="bt-track expected"><i style="width:${exp/max*100}%"></i></div></div>`;
+  }).join('');
+
+  const ratio=s.expected11>0?s.hits11/s.expected11:0;
+  const reading=ratio>1.15?'Acima da linha de base nesta amostra':ratio<.85?'Abaixo da linha de base nesta amostra':'Próximo da linha de base nesta amostra';
+  $('#backtestInsights').innerHTML=`
+    <div class="insight"><span>MELHOR RESULTADO OBSERVADO</span><b>${s.bestEver} acertos</b></div>
+    <div class="insight"><span>12+ ACERTOS</span><b>${s.hits12} • esperado ≈ ${s.expected12.toFixed(1)}</b></div>
+    <div class="insight"><span>14+ ACERTOS</span><b>${s.hits14} • esperado ≈ ${s.expected14.toFixed(2)}</b></div>
+    <div class="insight"><span>LEITURA</span><b>${reading}</b></div>
+    <div class="insight"><span>INTERPRETAÇÃO CORRETA</span><b>Histórico não garante vantagem futura</b></div>`;
+
+  $('#backtestHistory').innerHTML=d.rows.slice(0,20).map(r=>`<div class="bt-history-row"><div><b>#${r.contest}</b><span>${r.date||''}</span></div><div class="bt-hit-set"><span>J1 ${r.hits[0]}</span><span>J2 ${r.hits[1]}</span><span>J3 ${r.hits[2]}</span></div><strong class="bt-best ${r.best>=13?'high':''}">${r.best} pts</strong></div>`).join('');
 }
 
 function ensureBetDock(){
@@ -85,43 +141,19 @@ function startBetMode(index){
   const dock = ensureBetDock();
   const title = index===0 ? 'Jogo principal' : `Jogo ${index+1}`;
   dock.innerHTML = `
-    <div class="bet-dock-head">
-      <div>
-        <span>MODO APOSTA</span>
-        <strong>${title}</strong>
-      </div>
-      <button class="bet-close" aria-label="Fechar">×</button>
-    </div>
+    <div class="bet-dock-head"><div><span>MODO APOSTA</span><strong>${title}</strong></div><button class="bet-close" aria-label="Fechar">×</button></div>
     <div class="bet-help">Marque estas 15 dezenas no volante da Lotofácil no site oficial da CAIXA.</div>
     <div class="bet-numbers">${game.numbers.map(n=>`<b>${pad(n)}</b>`).join('')}</div>
-    <div class="bet-actions">
-      <button class="bet-reopen">↗ Abrir / voltar à CAIXA</button>
-      <button class="bet-done">Fechar modo aposta</button>
-    </div>
+    <div class="bet-actions"><button class="bet-reopen">↗ Abrir / voltar à CAIXA</button><button class="bet-done">Fechar modo aposta</button></div>
     <div class="bet-tip">A CAIXA abre em outra aba. Volte a esta aba quando quiser conferir os números.</div>`;
-  dock.classList.add('show');
-  document.body.classList.add('bet-mode-open');
-  dock.querySelector('.bet-close').onclick = closeBetMode;
-  dock.querySelector('.bet-done').onclick = closeBetMode;
-  dock.querySelector('.bet-reopen').onclick = openCaixa;
-  openCaixa();
+  dock.classList.add('show');document.body.classList.add('bet-mode-open');
+  dock.querySelector('.bet-close').onclick = closeBetMode;dock.querySelector('.bet-done').onclick = closeBetMode;dock.querySelector('.bet-reopen').onclick = openCaixa;openCaixa();
 }
 
 function openCaixa(){
-  const link = document.createElement('a');
-  link.href = LOTERIAS_URL;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  const link = document.createElement('a');link.href = LOTERIAS_URL;link.target = '_blank';link.rel = 'noopener noreferrer';document.body.appendChild(link);link.click();link.remove();
 }
-
-function closeBetMode(){
-  const dock = $('#betDock');
-  if(dock) dock.classList.remove('show');
-  document.body.classList.remove('bet-mode-open');
-}
+function closeBetMode(){const dock=$('#betDock');if(dock)dock.classList.remove('show');document.body.classList.remove('bet-mode-open');}
 
 $('#refreshBtn').addEventListener('click',load);
 load();
