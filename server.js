@@ -35,6 +35,8 @@ function validNumbers(values) {
   return nums;
 }
 
+function signature(nums) { return nums.map(n => String(n).padStart(2, '0')).join('-'); }
+
 function cleanCaixa(raw) {
   const numero = Number(raw.numero);
   if (!Number.isInteger(numero) || numero <= 0) throw new Error('Número de concurso inválido.');
@@ -90,13 +92,13 @@ async function fromCaixa(count) {
   return validateWindow(results, count);
 }
 
-async function fromMirror(count) {
-  const key = 'mirror:valorfinal';
+async function loadMirrorAll() {
+  const key = 'mirror:all';
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL) return validateWindow(hit.data, count);
+  if (hit && Date.now() - hit.at < TTL) return hit.data;
 
   const r = await fetchTimed(MIRROR, {
-    headers: { accept: 'application/json,*/*', 'user-agent': 'LotofacilPRO/1.3' }
+    headers: { accept: 'application/json,*/*', 'user-agent': 'LotofacilPRO/1.4' }
   }, 15000);
   if (!r.ok) throw new Error(`Base espelho respondeu ${r.status}`);
   const data = await r.json();
@@ -120,13 +122,39 @@ async function fromMirror(count) {
     };
   }).filter(Boolean).sort((a, b) => b.numero - a.numero);
 
-  if (Number.isInteger(Number(data.ultimoConcurso)) && results[0]?.numero !== Number(data.ultimoConcurso)) {
-    throw new Error(`Base inconsistente: último declarado ${data.ultimoConcurso}, encontrado ${results[0]?.numero || '?'}.`);
+  if (!results.length) throw new Error('Histórico vazio.');
+  if (Number.isInteger(Number(data.ultimoConcurso)) && results[0].numero !== Number(data.ultimoConcurso)) {
+    throw new Error(`Base inconsistente: último declarado ${data.ultimoConcurso}, encontrado ${results[0].numero}.`);
   }
-
-  const valid = validateWindow(results, count);
+  validateWindow(results, results.length);
   cache.set(key, { at: Date.now(), data: results });
-  return valid;
+  return results;
+}
+
+async function fromMirror(count) {
+  return validateWindow(await loadMirrorAll(), count);
+}
+
+function auditCombinations(history) {
+  const groups = new Map();
+  for (const draw of history) {
+    const sig = signature(draw.dezenas);
+    const list = groups.get(sig) || [];
+    list.push({ numero: draw.numero, data: draw.data });
+    groups.set(sig, list);
+  }
+  const duplicateGroups = [...groups.entries()]
+    .filter(([, contests]) => contests.length > 1)
+    .map(([sig, contests]) => ({ signature: sig, contests }))
+    .sort((a, b) => b.contests[0].numero - a.contests[0].numero);
+  const duplicatePairs = duplicateGroups.reduce((sum, g) => sum + (g.contests.length * (g.contests.length - 1)) / 2, 0);
+  return {
+    totalContests: history.length,
+    uniqueCombinations: groups.size,
+    duplicateGroups,
+    duplicatePairs,
+    signatures: [...groups.keys()]
+  };
 }
 
 async function getResults(count) {
@@ -153,12 +181,7 @@ function send(res, status, body, type = 'application/json; charset=utf-8') {
 
 function mime(file) {
   const ext = path.extname(file);
-  return ({
-    '.html': 'text/html; charset=utf-8',
-    '.css': 'text/css; charset=utf-8',
-    '.js': 'application/javascript; charset=utf-8',
-    '.json': 'application/json; charset=utf-8'
-  })[ext] || 'application/octet-stream';
+  return ({ '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8' })[ext] || 'application/octet-stream';
 }
 
 function serveStatic(reqPath, res) {
@@ -174,34 +197,20 @@ function serveStatic(reqPath, res) {
       });
       return;
     }
-    res.writeHead(200, {
-      'content-type': mime(file),
-      'cache-control': 'no-store, no-cache, must-revalidate',
-      pragma: 'no-cache',
-      expires: '0',
-      'x-content-type-options': 'nosniff'
-    });
+    res.writeHead(200, { 'content-type': mime(file), 'cache-control': 'no-store, no-cache, must-revalidate', pragma: 'no-cache', expires: '0', 'x-content-type-options': 'nosniff' });
     res.end(data);
   });
 }
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.3.0' });
+  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.4.0' });
 
   if (u.pathname === '/api/results') {
     try {
       const count = Math.min(Math.max(parseInt(u.searchParams.get('count') || '10', 10), 10), 80);
       const payload = await getResults(count);
-      return send(res, 200, {
-        source: payload.source,
-        sourceMode: payload.mode,
-        sourceUrl: payload.sourceUrl,
-        warning: payload.warning,
-        fetchedAt: new Date().toISOString(),
-        latestOfficial: payload.results[0].numero,
-        results: payload.results
-      });
+      return send(res, 200, { source: payload.source, sourceMode: payload.mode, sourceUrl: payload.sourceUrl, warning: payload.warning, fetchedAt: new Date().toISOString(), latestOfficial: payload.results[0].numero, results: payload.results });
     } catch (err) {
       console.error(err);
       return send(res, 502, { error: 'Não foi possível validar os resultados oficiais agora.', detail: err.message });
@@ -210,18 +219,32 @@ const server = http.createServer(async (req, res) => {
 
   if (u.pathname === '/api/history') {
     try {
-      const count = Math.min(Math.max(parseInt(u.searchParams.get('count') || '310', 10), 20), 400);
+      const count = Math.min(Math.max(parseInt(u.searchParams.get('count') || '310', 10), 20), 1000);
       const history = await fromMirror(count);
-      return send(res, 200, {
-        source: 'Base pública validada a partir dos resultados oficiais da CAIXA',
-        sourceUrl: MIRROR,
-        fetchedAt: new Date().toISOString(),
-        count: history.length,
-        results: history
-      });
+      return send(res, 200, { source: 'Base pública validada a partir dos resultados oficiais da CAIXA', sourceUrl: MIRROR, fetchedAt: new Date().toISOString(), count: history.length, results: history });
     } catch (err) {
       console.error(err);
       return send(res, 502, { error: 'Não foi possível carregar o histórico para o backtest.', detail: err.message });
+    }
+  }
+
+  if (u.pathname === '/api/exclusions') {
+    try {
+      const history = await loadMirrorAll();
+      const audit = auditCombinations(history);
+      return send(res, 200, {
+        source: 'Histórico validado de resultados da Lotofácil',
+        sourceUrl: MIRROR,
+        latestOfficial: history[0].numero,
+        totalContests: audit.totalContests,
+        uniqueCombinations: audit.uniqueCombinations,
+        duplicateGroups: audit.duplicateGroups,
+        duplicatePairs: audit.duplicatePairs,
+        signatures: audit.signatures
+      });
+    } catch (err) {
+      console.error(err);
+      return send(res, 502, { error: 'Não foi possível validar o histórico de exclusões.', detail: err.message });
     }
   }
 
@@ -229,12 +252,16 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Lotofácil PRO v1.3.0 em http://localhost:${PORT}`);
+  console.log(`Lotofácil PRO v1.4.0 em http://localhost:${PORT}`);
   setTimeout(async () => {
     try {
       const payload = await getResults(10);
       const nums = payload.results.map(r => r.numero);
       console.log(`[selftest] OK fonte=${payload.mode} último=${nums[0]} janela=${nums.join(',')}`);
+      const history = await loadMirrorAll();
+      const audit = auditCombinations(history);
+      const examples = audit.duplicateGroups.slice(0, 8).map(g => g.contests.map(c => c.numero).join('=')).join(';') || 'nenhuma';
+      console.log(`[archive] total=${audit.totalContests} unique=${audit.uniqueCombinations} duplicateGroups=${audit.duplicateGroups.length} duplicatePairs=${audit.duplicatePairs} examples=${examples}`);
     } catch (err) {
       console.error(`[selftest] FALHA ${err.message}`);
     }
