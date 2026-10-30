@@ -204,7 +204,7 @@ function serveStatic(reqPath, res) {
 
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.4.0' });
+  if (u.pathname === '/api/health') return send(res, 200, { ok: true, version: '1.4.1' });
 
   if (u.pathname === '/api/results') {
     try {
@@ -240,7 +240,8 @@ const server = http.createServer(async (req, res) => {
         uniqueCombinations: audit.uniqueCombinations,
         duplicateGroups: audit.duplicateGroups,
         duplicatePairs: audit.duplicatePairs,
-        signatures: audit.signatures
+        signatures: audit.signatures,
+        draws: history.map(d => ({ numero: d.numero, signature: signature(d.dezenas) }))
       });
     } catch (err) {
       console.error(err);
@@ -252,7 +253,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Lotofácil PRO v1.4.0 em http://localhost:${PORT}`);
+  console.log(`Lotofácil PRO v1.4.1 em http://localhost:${PORT}`);
   setTimeout(async () => {
     try {
       const payload = await getResults(10);
