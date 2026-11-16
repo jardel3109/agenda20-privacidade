@@ -79,6 +79,74 @@
 @media(max-width:980px){.occasion-cards{grid-template-columns:repeat(2,1fr)}.special-grid{grid-template-columns:1fr;gap:42px}.special-copy>p{max-width:660px}.special-benefits{grid-template-columns:repeat(3,1fr);gap:13px}.special-benefits>div{flex-direction:column;gap:10px}}
 @media(max-width:640px){.experience-inner{font-size:10px;align-items:flex-start;flex-wrap:wrap;gap:6px}.experience-inner a{font-size:10px}.occasions-section{padding:46px 0 52px}.occasions-heading{display:block;margin-bottom:23px}.occasions-heading h2{font-size:32px}.occasions-heading>p{margin-top:13px;font-size:12px;max-width:350px}.occasion-cards{gap:9px}.occasion-card{padding:14px 10px;border-radius:14px;gap:8px;flex-direction:column;align-items:flex-start;position:relative;min-height:133px}.occasion-icon{width:35px;height:35px;font-size:18px;border-radius:10px}.occasion-card b{font-size:12px}.occasion-card small{font-size:10px}.occasion-arrow{position:absolute;right:11px;top:15px;font-size:14px}.special-section{padding:55px 0 66px}.special-copy h2{font-size:42px;margin:19px 0}.special-copy>p{font-size:14px;line-height:1.7;margin-bottom:22px}.special-benefits{display:grid;grid-template-columns:1fr;gap:15px;margin:20px 0}.special-benefits>div{flex-direction:row;gap:14px}.special-form{padding:23px 17px;border-radius:19px}.special-form-heading h3{font-size:27px}.special-fields{gap:8px}.special-form input,.special-form select,.special-form textarea{font-size:14px;padding:12px 9px}.reviews-inner{flex-wrap:wrap;gap:13px}.reviews-symbol{height:48px;width:48px;font-size:27px}.reviews-copy{flex-basis:calc(100% - 65px)}.reviews-copy h2{font-size:22px}.reviews-copy p{font-size:12px}.reviews-link{width:100%;padding:13px;gap:3px}}
 
+
+/* V4.1 - cardapio legivel, com hierarquia visual e destaque nas categorias */
+.catalog-layout{background:#fffdf9;border-color:#ddc5b3;box-shadow:0 16px 42px rgba(80,34,39,.085)}
+.menu-tabs{background:#f3e7dc;border:1px solid #ead5c6;padding:6px}
+.menu-tab{font-size:14px;padding:13px 17px;color:#704b47}
+.menu-tab.active{background:#751f30;box-shadow:0 5px 13px rgba(95,21,39,.23)}
+.menu-tab small{font-size:11px}
+.menu-description{font-size:13px;color:#6b5552}
+.catalog-toolbar{margin-top:24px;gap:17px}
+.category-filters{gap:9px;padding:5px 2px 10px;scrollbar-width:thin;scrollbar-color:#d6aa89 #f9f1e9}
+.category-filters::-webkit-scrollbar{display:block;height:5px}
+.category-filters::-webkit-scrollbar-thumb{background:#d6aa89;border-radius:10px}
+.category-filters::-webkit-scrollbar-track{background:#f9f1e9;border-radius:10px}
+.chip{background:#fff;border:1.5px solid #ddc8b7;color:#654b47;border-radius:11px;padding:11px 16px;font-size:13px;font-weight:750;transition:background .18s,border-color .18s,color .18s}
+.chip.active{background:#782331;border-color:#782331;color:#fff;box-shadow:0 4px 10px rgba(103,29,44,.18)}
+.chip:hover:not(.active){background:#f8ece5;border-color:#bc9b84}
+.search{background:#fff;border:1.5px solid #dec4b3;border-radius:12px;padding:13px 14px;width:270px}
+.search input{font-size:14px;color:#453236}
+.search input::placeholder{color:#8a7670}
+.results-bar{margin:22px 0 17px;padding:14px 17px;background:#f7ede6;border:1px solid #e8d4c3;border-left:4px solid #8d3542;border-radius:11px;flex-wrap:wrap}
+.results-bar strong{color:#62202e;font-size:17px;line-height:1.4}
+.results-bar span{font-size:13px;color:#66524c}
+.product-grid{gap:16px}
+.product-card{background:linear-gradient(180deg,#fffefa 0%,#fff9f3 100%);border:1px solid #ddc3b1;border-left:4px solid #944251;border-radius:16px;padding:19px 18px;min-height:234px;box-shadow:0 5px 15px rgba(68,27,27,.075);transition:border-color .18s,box-shadow .18s,transform .18s}
+.product-card:hover{border-color:#b88780;box-shadow:0 10px 27px rgba(85,27,38,.14);transform:translateY(-2px)}
+.product-card-top{gap:12px;align-items:flex-start;min-width:0}
+.product-card-top>div:last-child{min-width:0}
+.product-emoji{width:46px;height:46px;flex:0 0 46px;border:1px solid #ead1b7;background:#f6e7d5;border-radius:12px;color:#914251}
+.product-emoji svg{width:27px;height:27px;display:block;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.product-card:nth-child(4n+2) .product-emoji{background:#f6e7e9;border-color:#e9c9cf}
+.product-card:nth-child(4n+3) .product-emoji{background:#f0e9d8;border-color:#e8d6b5}
+.product-card:nth-child(4n+4) .product-emoji{background:#efe9df;border-color:#e0d2c1}
+.product-category{display:inline-block;color:#8c4a3d;font-size:11px;line-height:1.3;font-weight:800;letter-spacing:.055em;background:#f6ebe2;border-radius:5px;padding:3px 7px;margin-top:1px}
+.product-card h3{font-size:17px;line-height:1.32;color:#42212a;font-weight:800;margin-top:7px;overflow-wrap:anywhere}
+.product-card .description{font-size:13px;line-height:1.52;color:#655650;min-height:39px;margin-top:15px;-webkit-line-clamp:3}
+.product-card-bottom{border-color:#e8d6c9;padding-top:15px;gap:12px}
+.product-price small{font-size:11px;color:#77635e}
+.product-price strong{font-size:19px;color:#722337;font-weight:800;line-height:1.25}
+.select-product{width:44px;height:44px;border-radius:12px;background:#7d2637;font-size:26px;box-shadow:0 4px 11px rgba(109,33,50,.22)}
+.select-product:focus-visible,.chip:focus-visible,.menu-tab:focus-visible{outline:3px solid #ce9b52;outline-offset:3px}
+.catalog-footnote{font-size:12px;color:#72645e;line-height:1.6}
+@media(max-width:760px){
+ .catalog-layout{padding:17px 14px;border-radius:18px}
+ .menu-tab{font-size:13px;padding:12px 10px;line-height:1.35}
+ .menu-tab small{font-size:10px}
+ .menu-description{font-size:13px}
+ .catalog-toolbar{gap:11px;margin-top:18px}
+ .search{width:100%;padding:13px}
+ .search input{font-size:15px}
+ .chip{font-size:13px;padding:10px 13px}
+ .category-filters{margin-right:-14px}
+ .results-bar{margin:17px 0 15px;padding:13px 12px;gap:5px}
+ .results-bar strong{font-size:16px}
+ .results-bar span{font-size:12px}
+ .product-grid{gap:12px}
+ .product-card{padding:15px;border-left-width:4px;min-height:0;gap:9px}
+ .product-emoji{width:42px;height:42px;flex-basis:42px}
+ .product-emoji svg{width:25px;height:25px}
+ .product-category{font-size:10px}
+ .product-card h3{font-size:16px;line-height:1.34;margin-top:6px}
+ .product-card .description{font-size:13px;line-height:1.52;margin:1px 0 0;min-height:0;-webkit-line-clamp:3}
+ .product-card-bottom{margin:1px 0 0;padding-top:12px}
+ .product-price small{font-size:11px}
+ .product-price strong{font-size:19px}
+ .select-product{width:43px;height:43px}
+ .catalog-footnote{font-size:11px}
+}
+@media(max-width:420px){.menu-tab{font-size:12px}.product-card h3{font-size:16px}.chip{font-size:12.5px}}
 </style>
   <title>Boníssima | Mais sabor para cada momento</title>
 </head>
@@ -4073,7 +4141,7 @@ window.BONISSIMA_CATALOG = [
     $('#emptyState').hidden=list.length>0;
     const cards=list.slice(append?previousLimit:0,state.limit).map(p=>`
       <article class="product-card">
-        <div class="product-card-top"><div class="product-emoji" aria-hidden="true">${EMOJI[p.cat]||'🍞'}</div><div><div class="product-category">${esc(p.cat)}</div><h3>${esc(p.name)}</h3></div></div>
+        <div class="product-card-top"><div class="product-emoji" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M5 17v-2a7 7 0 0 1 14 0v2H5ZM12 6v2M10 6h4"/></svg></div><div><div class="product-category">${esc(p.cat)}</div><h3>${esc(p.name)}</h3></div></div>
         <p class="description">${esc(p.desc||p.notes||'Escolha as opções e consulte a disponibilidade.')}</p>
         <div class="product-card-bottom"><div class="product-price"><small>${p.variants?'Opções disponíveis':p.unit==='kg'?'Valor por quilo':'Preço do cardápio'}</small><strong>${esc(rangeText(p))}</strong></div><button class="select-product" type="button" data-product="${p.id}" aria-label="Selecionar ${esc(p.name)}">＋</button></div>
       </article>`).join('');
