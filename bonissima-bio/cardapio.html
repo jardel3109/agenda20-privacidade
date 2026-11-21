@@ -216,23 +216,24 @@
 @media(max-width:390px){.featured-card-foot{align-items:stretch;flex-direction:column}.featured-pick{width:100%}}
 </style>
 <style>
-/* Boníssima V4.4 — fotos ilustrativas suaves no canto dos oito destaques */
+/* Boníssima V4.5 — imagens mais nítidas nos oito destaques, sem comprometer a leitura */
 .featured-card{position:relative;isolation:isolate;overflow:hidden}
 .featured-card .featured-photo{
-  position:absolute;z-index:0;top:0;right:0;width:83%;height:150px;
-  display:block;object-fit:cover;object-position:50% 45%;opacity:.88;
+  position:absolute;z-index:0;top:0;right:0;width:86%;height:156px;
+  display:block;object-fit:cover;object-position:50% 45%;opacity:1;
+  filter:saturate(1.2) contrast(1.12);
   pointer-events:none;border:0;border-radius:0;
-  -webkit-mask-image:radial-gradient(ellipse 92% 93% at 100% 0%,#000 18%,transparent 83%);
-  mask-image:radial-gradient(ellipse 92% 93% at 100% 0%,#000 18%,transparent 83%);
+  -webkit-mask-image:radial-gradient(ellipse 108% 102% at 100% 0%,#000 0%,#000 53%,rgba(0,0,0,.9) 63%,rgba(0,0,0,.42) 79%,transparent 100%);
+  mask-image:radial-gradient(ellipse 108% 102% at 100% 0%,#000 0%,#000 53%,rgba(0,0,0,.9) 63%,rgba(0,0,0,.42) 79%,transparent 100%);
 }
 .featured-card > :not(.featured-photo){position:relative;z-index:1}
-.featured-card .featured-symbol{background:#f6e8d7df}
-.featured-card h3,.featured-card p{text-shadow:0 1px 3px rgba(255,251,246,.70)}
-.featured-card-foot{background:linear-gradient(90deg,rgba(255,253,248,.62),rgba(255,251,246,.72));border-radius:0 0 4px 4px;margin-top:auto}
+.featured-card .featured-symbol{background:#f6e8d7e8}
+.featured-card h3,.featured-card p{text-shadow:0 1px 4px rgba(255,251,246,.95)}
+.featured-card-foot{background:linear-gradient(90deg,rgba(255,253,248,.80),rgba(255,251,246,.74));border-radius:0 0 4px 4px;margin-top:auto}
 .featured-photo-note{margin:12px 0 0;color:#887971;font-size:11px;line-height:1.45}
 @media(max-width:760px){
- .featured-card .featured-photo{width:91%;height:125px;opacity:.79}
- .featured-card h3,.featured-card p{text-shadow:0 1px 4px rgba(255,251,246,.95)}
+ .featured-card .featured-photo{width:90%;height:130px;opacity:1}
+ .featured-card h3,.featured-card p{text-shadow:0 1px 4px rgba(255,251,246,1)}
 }
 </style>
 </head>
